@@ -1,6 +1,7 @@
 include LICENSE ChangeLog README.rst pyproject.toml
-include enet.pyx
+include enet.pyx enet.pyi openssl_dtls.pxd
 
 include *.py
 
 recursive-include enet *
+recursive-include patches *

@@ -24,7 +24,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu-latest, ubuntu-24.04-arm, windows-latest, windows-11-arm, macos-15-intel, macos-15]
 
     steps:
       - uses: actions/checkout@v4
@@ -32,10 +32,7 @@ jobs:
           submodules: true
 
       - name: Build
-        uses: pypa/cibuildwheel@v2.22
-        env:
-          CIBW_BUILD_FRONTEND: "build"
-          CIBW_SKIP: "pp*"
+        uses: pypa/cibuildwheel@v3.3.1
         with:
           output-dir: wheelhouse
 

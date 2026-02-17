@@ -1,0 +1,40 @@
+diff --git a/include/enet/enet.h b/include/enet/enet.h
+index fc45cbd..dd835d6 100644
+--- a/include/enet/enet.h
++++ b/include/enet/enet.h
+@@ -343,7 +343,10 @@ typedef enet_uint32 (ENET_CALLBACK * ENetChecksumCallback) (const ENetBuffer * b
+ 
+ /** Callback for intercepting received raw UDP packets. Should return 1 to intercept, 0 to ignore, or -1 to propagate an error. */
+ typedef int (ENET_CALLBACK * ENetInterceptCallback) (struct _ENetHost * host, struct _ENetEvent * event);
+- 
++
++/** Callback for intercepting outgoing raw UDP sends. Returns bytes sent or -1 on error. */
++typedef int (ENET_CALLBACK * ENetSendCallback) (struct _ENetHost * host, ENetSocket socket, const ENetAddress * address, const ENetBuffer * buffers, size_t bufferCount);
++
+ /** An ENet host for communicating with peers.
+   *
+   * No fields should be modified unless otherwise stated.
+@@ -393,6 +396,7 @@ typedef struct _ENetHost
+    enet_uint32          totalReceivedData;           /**< total data received, user should reset to 0 as needed to prevent overflow */
+    enet_uint32          totalReceivedPackets;        /**< total UDP packets received, user should reset to 0 as needed to prevent overflow */
+    ENetInterceptCallback intercept;                  /**< callback the user can set to intercept received raw UDP packets */
++   ENetSendCallback     sendCallback;               /**< callback the user can set to intercept outgoing raw UDP sends */
+    size_t               connectedPeers;
+    size_t               bandwidthLimitedPeers;
+    size_t               duplicatePeers;              /**< optional number of allowed peers from duplicate IPs, defaults to ENET_PROTOCOL_MAXIMUM_PEER_ID */
+diff --git a/protocol.c b/protocol.c
+index 9d654f1..041a0aa 100644
+--- a/protocol.c
++++ b/protocol.c
+@@ -1686,7 +1686,10 @@ enet_protocol_send_outgoing_commands (ENetHost * host, ENetEvent * event, int ch
+ 
+         currentPeer -> lastSendTime = host -> serviceTime;
+ 
+-        sentLength = enet_socket_send (host -> socket, & currentPeer -> address, host -> buffers, host -> bufferCount);
++        if (host -> sendCallback != NULL)
++            sentLength = host -> sendCallback (host, host -> socket, & currentPeer -> address, host -> buffers, host -> bufferCount);
++        else
++            sentLength = enet_socket_send (host -> socket, & currentPeer -> address, host -> buffers, host -> bufferCount);
+ 
+         enet_protocol_remove_sent_unreliable_commands (currentPeer);
+ 

@@ -1,89 +1,119 @@
-pyenet
-======
+pyenet-dtls
+===========
 
-pyenet is a python wrapper for the ENet library by Lee Salzman,
-http://enet.bespin.org
+pyenet-dtls is a Python wrapper for the `ENet <http://enet.bespin.org>`_
+UDP networking library with DTLS (Datagram Transport Layer Security)
+support via OpenSSL.
 
-It was originally written by Scott Robinson scott@tranzoa.com and is
-currently maintained by Andrew Resch andrewresch@gmail.com
+It is a fork of `pyenet <https://github.com/piqueserver/pyenet>`_, originally
+written by Scott Robinson and maintained by Andrew Resch and the piqueserver
+team.
 
-This fork is being maintained by the piqueserver team for purposes of
-including patches for bugs found while developing piqueserver, and to
-provide a package on pypi.
+Features
+--------
+
+- Full Python 3 support (Cython 3)
+- Optional DTLS encryption for secure UDP communication
+- Builds with or without OpenSSL (DTLS is automatically enabled when OpenSSL
+  is available)
+- Pre-built wheels for Linux, Windows, and macOS
 
 License
 -------
 
-pyenet is licensed under the BSD license, see LICENSE for details. enet
+pyenet-dtls is licensed under the BSD license, see LICENSE for details. ENet
 is licensed under the MIT license, see
 http://enet.bespin.org/License.html
 
 Dependencies
 ------------
 
-Building pyenet requires all the same dependencies as enet plus Cython
-and, obviously, Python.
+- Python >= 3.9
+- Cython >= 3
+- OpenSSL development headers
 
 Installation
 ------------
 
-From pypi
+From PyPI
 ~~~~~~~~~
 
 ::
 
-    pip install pyenet
+    pip install pyenet-dtls
 
-Manually from git
-~~~~~~~~~~~~~~~~~
-
-Run the setup.py build:
+From source
+~~~~~~~~~~~
 
 ::
 
-    $ python setup.py build
+    git clone --recursive <repo-url>
+    cd pyenet
+    pip install .
 
-Once that is complete, install the new pyenet module:
+Building wheels
+~~~~~~~~~~~~~~~
 
-::
+Build locally using Docker/Podman (Linux only)::
 
-    # python setup.py install
+    ./scripts/build_packages.sh
 
-Packaging notes
----------------
+Wheels are output to the ``wheelhouse/`` directory.
 
--  update package version in ``setup.py``
--  create a virtualenv
-   (``python3 -m venv venv && source venv/bin/activate``)
--  install the requirements: ``pip install -r dev-requirements.txt``
--  build the source dist: ``python setup.py sdist``
--  make sure docker is installed and running and you’re on a 64bit linux
-   machine
--  build the binary dists: ``./scripts/build_packages.sh``
--  upload to pypi: ``twine upload dist/* wheelhouse/pyenet*``
--  commit, tag, push to github
+For all platforms (Linux, Windows, macOS), push to GitHub and use the
+**Wheel build** workflow, or create a release to trigger the **Publish to
+PyPI** workflow.
 
 Usage
 -----
 
-Once you have installed pyenet, you only need to import the enet module
-to start using enet in your project.
-
-Example server:
+Basic example (no DTLS):
 
 ::
 
     >>> import enet
-    >>> host = enet.Host(enet.Address("localhost", 33333), 1, 0, 0)
-    >>> event = host.service(0)
 
-Example client:
+    >>> # Server
+    >>> server = enet.Host(enet.Address("localhost", 33333), 32, 2, 0, 0)
+    >>> event = server.service(1000)
+
+    >>> # Client
+    >>> client = enet.Host(None, 1, 2, 0, 0)
+    >>> peer = client.connect(enet.Address("localhost", 33333), 2)
+
+With DTLS encryption:
 
 ::
 
     >>> import enet
-    >>> host = enet.Host(None, 1, 0, 0)
-    >>> peer = host.connect(enet.Address("localhost", 33333), 1)
 
-More information on usage can be obtained from:
+    >>> # Server with TLS certificate
+    >>> server = enet.Host(enet.Address("localhost", 33333), 32, 2, 0, 0,
+    ...                    dtls_cert="server.pem", dtls_key="server.key")
+
+    >>> # Client connecting with DTLS
+    >>> client = enet.Host(None, 1, 2, 0, 0)
+    >>> peer = client.connect(enet.Address("localhost", 33333), 2, dtls=True)
+
+Check if DTLS support is available::
+
+    >>> import enet
+    >>> print(enet.DTLS_AVAILABLE)
+    True
+
+Generating a self-signed certificate
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+DTLS requires a certificate and private key for the server. To generate a
+self-signed certificate for testing or development::
+
+    openssl req -x509 -newkey rsa:2048 -nodes \
+        -keyout server.key -out server.pem \
+        -days 365 -subj "/CN=localhost"
+
+This creates ``server.pem`` (certificate) and ``server.key`` (private key)
+valid for 365 days. For production use, obtain a certificate from a trusted
+certificate authority.
+
+More information on ENet usage can be found at:
 http://enet.bespin.org/Tutorial.html

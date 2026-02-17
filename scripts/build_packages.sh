@@ -1,10 +1,9 @@
 #!/bin/bash
 
-# script to fire up the docker image with the build script to produce all the
-# binary wheels.
-# Will have to be run as root or user in the docker group.
-# Also should be run with the cwd equal to the project root.
+# Script to build manylinux wheels using Docker.
+# Must be run from the project root.
+# Requires Docker (run as root or a user in the docker group).
 
 set -e -x
 
-docker run --rm -v `pwd`:/io quay.io/pypa/manylinux1_x86_64 /io/scripts/docker_build.sh
+docker run --rm -v "$(pwd)":/io:Z quay.io/pypa/manylinux_2_28_x86_64 bash /io/scripts/docker_build.sh
