@@ -14,8 +14,6 @@ Features
 
 - Full Python 3 support (Cython 3)
 - Optional DTLS encryption for secure UDP communication
-- Builds with or without OpenSSL (DTLS is automatically enabled when OpenSSL
-  is available)
 - Pre-built wheels for Linux, Windows, and macOS
 
 License
